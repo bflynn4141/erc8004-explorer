@@ -13,6 +13,8 @@ export function AgentModal({ agent, onClose }: AgentModalProps) {
   const { data: details, isLoading } = useAgentDetails(parseInt(chainId), agentId)
 
   const agentData = details || agent
+  const feedbackByTag = details?.feedbackByTag ?? []
+  const recentFeedback = details?.recentFeedback ?? []
 
   return (
     <div
@@ -111,11 +113,11 @@ export function AgentModal({ agent, onClose }: AgentModalProps) {
               )}
 
               {/* Feedback by Tag */}
-              {details?.feedbackByTag && details.feedbackByTag.length > 0 && (
+              {feedbackByTag.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Feedback by Category</h3>
                   <div className="flex flex-wrap gap-2">
-                    {details.feedbackByTag.map((tag) => (
+                    {feedbackByTag.map((tag) => (
                       <div
                         key={tag.tag}
                         className="bg-slate-700/50 rounded-lg px-3 py-2 flex items-center gap-2"
@@ -131,11 +133,11 @@ export function AgentModal({ agent, onClose }: AgentModalProps) {
               )}
 
               {/* Recent Feedback */}
-              {details?.recentFeedback && details.recentFeedback.length > 0 && (
+              {recentFeedback.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Recent Feedback</h3>
                   <div className="space-y-2">
-                    {details.recentFeedback.slice(0, 5).map((fb) => (
+                    {recentFeedback.slice(0, 5).map((fb) => (
                       <div
                         key={fb.id}
                         className="bg-slate-700/50 rounded-lg p-3 flex items-center justify-between"
@@ -217,7 +219,7 @@ export function AgentModal({ agent, onClose }: AgentModalProps) {
               </div>
 
               {/* Services */}
-              {details?.services && (
+              {details?.services != null && (
                 <div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Services</h3>
                   <pre className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto">
