@@ -1,0 +1,441 @@
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+scalar BigInt
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Meta {
+  status: JSON
+}
+
+type Query {
+  agent(id: String!): agent
+  agents(where: agentFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): agentPage!
+  feedback(id: String!): feedback
+  feedbacks(where: feedbackFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): feedbackPage!
+  agentStats(agentId: String!): agentStats
+  agentStatss(where: agentStatsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): agentStatsPage!
+  activity(id: String!): activity
+  activitys(where: activityFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): activityPage!
+  _meta: Meta
+}
+
+type agent {
+  id: String!
+  agentId: BigInt!
+  chainId: Int!
+  owner: String!
+  agentUri: String!
+  name: String
+  description: String
+  imageUri: String
+  services: JSON
+  isActive: Boolean
+  createdAt: BigInt!
+  updatedAt: BigInt
+  txHash: String!
+  feedback(where: feedbackFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): feedbackPage
+  stats: agentStats
+  activities(where: activityFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): activityPage
+}
+
+type feedbackPage {
+  items: [feedback!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type feedback {
+  id: String!
+  agentId: String!
+  giver: String!
+  value: BigInt!
+  tag1: String
+  createdAt: BigInt!
+  txHash: String!
+  chainId: Int!
+  agent: agent
+}
+
+input feedbackFilter {
+  AND: [feedbackFilter]
+  OR: [feedbackFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  agentId: String
+  agentId_not: String
+  agentId_in: [String]
+  agentId_not_in: [String]
+  agentId_contains: String
+  agentId_not_contains: String
+  agentId_starts_with: String
+  agentId_ends_with: String
+  agentId_not_starts_with: String
+  agentId_not_ends_with: String
+  giver: String
+  giver_not: String
+  giver_in: [String]
+  giver_not_in: [String]
+  giver_contains: String
+  giver_not_contains: String
+  giver_starts_with: String
+  giver_ends_with: String
+  giver_not_starts_with: String
+  giver_not_ends_with: String
+  value: BigInt
+  value_not: BigInt
+  value_in: [BigInt]
+  value_not_in: [BigInt]
+  value_gt: BigInt
+  value_lt: BigInt
+  value_gte: BigInt
+  value_lte: BigInt
+  tag1: String
+  tag1_not: String
+  tag1_in: [String]
+  tag1_not_in: [String]
+  tag1_contains: String
+  tag1_not_contains: String
+  tag1_starts_with: String
+  tag1_ends_with: String
+  tag1_not_starts_with: String
+  tag1_not_ends_with: String
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  chainId: Int
+  chainId_not: Int
+  chainId_in: [Int]
+  chainId_not_in: [Int]
+  chainId_gt: Int
+  chainId_lt: Int
+  chainId_gte: Int
+  chainId_lte: Int
+}
+
+type agentStats {
+  agentId: String!
+  feedbackCount: Int
+  totalScore: BigInt
+  averageScore: Float
+  uniqueGivers: Int
+  lastUpdated: BigInt
+}
+
+type activityPage {
+  items: [activity!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type activity {
+  id: String!
+  type: String!
+  agentId: String!
+  agentName: String
+  actor: String!
+  details: JSON
+  chainId: Int!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+  agent: agent
+}
+
+input activityFilter {
+  AND: [activityFilter]
+  OR: [activityFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  type: String
+  type_not: String
+  type_in: [String]
+  type_not_in: [String]
+  type_contains: String
+  type_not_contains: String
+  type_starts_with: String
+  type_ends_with: String
+  type_not_starts_with: String
+  type_not_ends_with: String
+  agentId: String
+  agentId_not: String
+  agentId_in: [String]
+  agentId_not_in: [String]
+  agentId_contains: String
+  agentId_not_contains: String
+  agentId_starts_with: String
+  agentId_ends_with: String
+  agentId_not_starts_with: String
+  agentId_not_ends_with: String
+  agentName: String
+  agentName_not: String
+  agentName_in: [String]
+  agentName_not_in: [String]
+  agentName_contains: String
+  agentName_not_contains: String
+  agentName_starts_with: String
+  agentName_ends_with: String
+  agentName_not_starts_with: String
+  agentName_not_ends_with: String
+  actor: String
+  actor_not: String
+  actor_in: [String]
+  actor_not_in: [String]
+  actor_contains: String
+  actor_not_contains: String
+  actor_starts_with: String
+  actor_ends_with: String
+  actor_not_starts_with: String
+  actor_not_ends_with: String
+  chainId: Int
+  chainId_not: Int
+  chainId_in: [Int]
+  chainId_not_in: [Int]
+  chainId_gt: Int
+  chainId_lt: Int
+  chainId_gte: Int
+  chainId_lte: Int
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+}
+
+type agentPage {
+  items: [agent!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input agentFilter {
+  AND: [agentFilter]
+  OR: [agentFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  agentId: BigInt
+  agentId_not: BigInt
+  agentId_in: [BigInt]
+  agentId_not_in: [BigInt]
+  agentId_gt: BigInt
+  agentId_lt: BigInt
+  agentId_gte: BigInt
+  agentId_lte: BigInt
+  chainId: Int
+  chainId_not: Int
+  chainId_in: [Int]
+  chainId_not_in: [Int]
+  chainId_gt: Int
+  chainId_lt: Int
+  chainId_gte: Int
+  chainId_lte: Int
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  agentUri: String
+  agentUri_not: String
+  agentUri_in: [String]
+  agentUri_not_in: [String]
+  agentUri_contains: String
+  agentUri_not_contains: String
+  agentUri_starts_with: String
+  agentUri_ends_with: String
+  agentUri_not_starts_with: String
+  agentUri_not_ends_with: String
+  name: String
+  name_not: String
+  name_in: [String]
+  name_not_in: [String]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_ends_with: String
+  name_not_starts_with: String
+  name_not_ends_with: String
+  description: String
+  description_not: String
+  description_in: [String]
+  description_not_in: [String]
+  description_contains: String
+  description_not_contains: String
+  description_starts_with: String
+  description_ends_with: String
+  description_not_starts_with: String
+  description_not_ends_with: String
+  imageUri: String
+  imageUri_not: String
+  imageUri_in: [String]
+  imageUri_not_in: [String]
+  imageUri_contains: String
+  imageUri_not_contains: String
+  imageUri_starts_with: String
+  imageUri_ends_with: String
+  imageUri_not_starts_with: String
+  imageUri_not_ends_with: String
+  isActive: Boolean
+  isActive_not: Boolean
+  isActive_in: [Boolean]
+  isActive_not_in: [Boolean]
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_in: [BigInt]
+  updatedAt_not_in: [BigInt]
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+}
+
+type agentStatsPage {
+  items: [agentStats!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input agentStatsFilter {
+  AND: [agentStatsFilter]
+  OR: [agentStatsFilter]
+  agentId: String
+  agentId_not: String
+  agentId_in: [String]
+  agentId_not_in: [String]
+  agentId_contains: String
+  agentId_not_contains: String
+  agentId_starts_with: String
+  agentId_ends_with: String
+  agentId_not_starts_with: String
+  agentId_not_ends_with: String
+  feedbackCount: Int
+  feedbackCount_not: Int
+  feedbackCount_in: [Int]
+  feedbackCount_not_in: [Int]
+  feedbackCount_gt: Int
+  feedbackCount_lt: Int
+  feedbackCount_gte: Int
+  feedbackCount_lte: Int
+  totalScore: BigInt
+  totalScore_not: BigInt
+  totalScore_in: [BigInt]
+  totalScore_not_in: [BigInt]
+  totalScore_gt: BigInt
+  totalScore_lt: BigInt
+  totalScore_gte: BigInt
+  totalScore_lte: BigInt
+  averageScore: Float
+  averageScore_not: Float
+  averageScore_in: [Float]
+  averageScore_not_in: [Float]
+  averageScore_gt: Float
+  averageScore_lt: Float
+  averageScore_gte: Float
+  averageScore_lte: Float
+  uniqueGivers: Int
+  uniqueGivers_not: Int
+  uniqueGivers_in: [Int]
+  uniqueGivers_not_in: [Int]
+  uniqueGivers_gt: Int
+  uniqueGivers_lt: Int
+  uniqueGivers_gte: Int
+  uniqueGivers_lte: Int
+  lastUpdated: BigInt
+  lastUpdated_not: BigInt
+  lastUpdated_in: [BigInt]
+  lastUpdated_not_in: [BigInt]
+  lastUpdated_gt: BigInt
+  lastUpdated_lt: BigInt
+  lastUpdated_gte: BigInt
+  lastUpdated_lte: BigInt
+}

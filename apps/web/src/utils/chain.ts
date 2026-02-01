@@ -1,11 +1,13 @@
 // Chain ID to name mapping
 const CHAIN_NAMES: Record<number, string> = {
+  1: 'Ethereum',
   11155111: 'Sepolia',
   84532: 'Base Sepolia',
 }
 
 // Chain ID to Etherscan base URL
 const ETHERSCAN_URLS: Record<number, string> = {
+  1: 'https://etherscan.io',
   11155111: 'https://sepolia.etherscan.io',
   84532: 'https://sepolia.basescan.org',
 }

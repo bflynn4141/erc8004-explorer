@@ -4,40 +4,50 @@ import { http } from "viem";
 import IdentityRegistryAbi from "./abis/IdentityRegistry.json";
 import ReputationRegistryAbi from "./abis/ReputationRegistry.json";
 
-// Contract addresses (same across all EVM testnets)
-const IDENTITY_REGISTRY = "0x7177a6867296406881E20d6647232314736Dd09A" as const;
-const REPUTATION_REGISTRY = "0xB5048e3ef1DA4E04deB6f7d0423D06F63869e322" as const;
+// Mainnet contract addresses (0x8004 vanity addresses)
+const MAINNET_IDENTITY_REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
+const MAINNET_REPUTATION_REGISTRY = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63" as const;
+
+// Testnet contract addresses (legacy addresses)
+const TESTNET_IDENTITY_REGISTRY = "0x7177a6867296406881E20d6647232314736Dd09A" as const;
+const TESTNET_REPUTATION_REGISTRY = "0xB5048e3ef1DA4E04deB6f7d0423D06F63869e322" as const;
 
 export default createConfig({
   networks: {
+    mainnet: {
+      chainId: 1,
+      transport: http(process.env.PONDER_RPC_URL_1),
+    },
     sepolia: {
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
-    },
-    baseSepolia: {
-      chainId: 84532,
-      transport: http(process.env.PONDER_RPC_URL_84532),
     },
   },
   contracts: {
     IdentityRegistry: {
       abi: IdentityRegistryAbi,
-      address: IDENTITY_REGISTRY,
       network: {
-        sepolia: {
-          startBlock: 9376993, // Deployment block on Sepolia
+        mainnet: {
+          address: MAINNET_IDENTITY_REGISTRY,
+          startBlock: 24339871, // Deployed Jan 29, 2026
         },
-        // baseSepolia disabled until we verify deployment
+        sepolia: {
+          address: TESTNET_IDENTITY_REGISTRY,
+          startBlock: 9376993,
+        },
       },
     },
     ReputationRegistry: {
       abi: ReputationRegistryAbi,
-      address: REPUTATION_REGISTRY,
       network: {
-        sepolia: {
-          startBlock: 9376993, // Same deployment block
+        mainnet: {
+          address: MAINNET_REPUTATION_REGISTRY,
+          startBlock: 24339871, // Deployed Jan 29, 2026
         },
-        // baseSepolia disabled until we verify deployment
+        sepolia: {
+          address: TESTNET_REPUTATION_REGISTRY,
+          startBlock: 9376993,
+        },
       },
     },
   },

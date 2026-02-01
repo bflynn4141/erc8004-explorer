@@ -34,8 +34,8 @@ function App() {
             className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">All Chains</option>
+            <option value="1">Ethereum</option>
             <option value="11155111">Sepolia</option>
-            <option value="84532">Base Sepolia</option>
           </select>
         </div>
 

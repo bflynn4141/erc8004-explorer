@@ -221,6 +221,7 @@ ponder.get("/stats", async (c) => {
 
   // Chain name mapping
   const chainNames: Record<number, string> = {
+    1: "ethereum",
     11155111: "sepolia",
     84532: "base-sepolia",
   };
