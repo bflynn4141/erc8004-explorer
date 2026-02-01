@@ -4,16 +4,17 @@
   "type": "module",
   "scripts": {
     "dev": "ponder dev",
+    "build": "ponder codegen",
     "start": "ponder start",
     "serve": "ponder serve",
     "codegen": "ponder codegen"
   },
   "dependencies": {
+    "@ponder/core": "^0.7.17",
     "hono": "^4.0.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
-    "@ponder/core": "^0.7.17",
     "typescript": "^5.3.3"
   }
 }
