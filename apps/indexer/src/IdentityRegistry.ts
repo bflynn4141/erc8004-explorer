@@ -65,8 +65,10 @@ async function fetchMetadata(uri: string): Promise<{
           network: x402Payment.network,
         };
       } else if (data.x402Support) {
-        // x402Support flag is set, try to find payee in services array
-        // Common pattern: services: [{name: "wallet", endpoint: "0x..."}]
+        // x402Support flag is set, try multiple sources for payee
+        let payeeFound = false;
+
+        // 1. Try services.wallet.endpoint
         const walletService = data.services?.find(
           (s: { name?: string }) => s.name?.toLowerCase() === "wallet"
         );
@@ -74,9 +76,43 @@ async function fetchMetadata(uri: string): Promise<{
           x402Info = {
             hasX402: true,
             payee: walletService.endpoint,
-            network: "base", // Default to Base for x402
+            network: "base",
           };
-        } else {
+          payeeFound = true;
+        }
+
+        // 2. Try A2A agent manifest if available
+        if (!payeeFound) {
+          const a2aService = data.services?.find(
+            (s: { name?: string }) => s.name?.toLowerCase() === "a2a"
+          );
+          if (a2aService?.endpoint) {
+            try {
+              const a2aResponse = await fetch(a2aService.endpoint, {
+                headers: { Accept: "application/json" },
+                signal: AbortSignal.timeout(5000),
+              });
+              if (a2aResponse.ok) {
+                const a2aData = await a2aResponse.json();
+                const a2aPayment = a2aData.payments?.find(
+                  (p: { method?: string }) => p.method === "x402"
+                );
+                if (a2aPayment?.payee) {
+                  x402Info = {
+                    hasX402: true,
+                    payee: a2aPayment.payee,
+                    network: a2aPayment.network || "base",
+                  };
+                  payeeFound = true;
+                }
+              }
+            } catch (e) {
+              // A2A fetch failed, continue without it
+            }
+          }
+        }
+
+        if (!payeeFound) {
           // Has x402Support but no payee found
           x402Info = { hasX402: true };
         }
