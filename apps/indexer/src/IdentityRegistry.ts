@@ -56,6 +56,7 @@ async function fetchMetadata(uri: string): Promise<{
     // Extract x402 payment info if present
     let x402Info: X402Info = { hasX402: false };
     if (data.x402Support === true || data.payments) {
+      // First try the payments array format
       const x402Payment = data.payments?.find((p: { method?: string }) => p.method === "x402");
       if (x402Payment) {
         x402Info = {
@@ -64,7 +65,21 @@ async function fetchMetadata(uri: string): Promise<{
           network: x402Payment.network,
         };
       } else if (data.x402Support) {
-        x402Info = { hasX402: true };
+        // x402Support flag is set, try to find payee in services array
+        // Common pattern: services: [{name: "wallet", endpoint: "0x..."}]
+        const walletService = data.services?.find(
+          (s: { name?: string }) => s.name?.toLowerCase() === "wallet"
+        );
+        if (walletService?.endpoint && walletService.endpoint.startsWith("0x")) {
+          x402Info = {
+            hasX402: true,
+            payee: walletService.endpoint,
+            network: "base", // Default to Base for x402
+          };
+        } else {
+          // Has x402Support but no payee found
+          x402Info = { hasX402: true };
+        }
       }
     }
 
