@@ -65,9 +65,10 @@ export const activity = onchainTable("activity", (t) => ({
 // Payment table - x402 USDC payments (on Base)
 export const payment = onchainTable("payment", (t) => ({
   id: t.text().primaryKey(), // txHash:logIndex
-  agentId: t.text().notNull(), // FK to agent (for aggregation queries)
+  agentId: t.text().notNull(), // FK to agent or "unknown:{payee}" for unattributed
   payee: t.text().notNull(), // Recipient address (agent's x402Payee)
-  payer: t.text().notNull(), // Sender address
+  facilitator: t.text().notNull(), // Facilitator address that settled the payment
+  facilitatorId: t.text(), // Facilitator ID (coinbase, daydreams, thirdweb, etc.)
   amount: t.bigint().notNull(), // USDC amount (6 decimals)
   chainId: t.integer().notNull(), // 8453 for Base
   blockNumber: t.bigint().notNull(),

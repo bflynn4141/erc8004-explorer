@@ -25,6 +25,12 @@ type Query {
   agentStatss(where: agentStatsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): agentStatsPage!
   activity(id: String!): activity
   activitys(where: activityFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): activityPage!
+  payment(id: String!): payment
+  payments(where: paymentFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): paymentPage!
+  payeeLookup(payee: String!): payeeLookup
+  payeeLookups(where: payeeLookupFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): payeeLookupPage!
+  agentVolume(agentId: String!): agentVolume
+  agentVolumes(where: agentVolumeFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): agentVolumePage!
   _meta: Meta
 }
 
@@ -38,12 +44,16 @@ type agent {
   description: String
   imageUri: String
   services: JSON
+  hasX402: Boolean
+  x402Payee: String
+  x402Network: String
   isActive: Boolean
   createdAt: BigInt!
   updatedAt: BigInt
   txHash: String!
   feedback(where: feedbackFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): feedbackPage
   stats: agentStats
+  volume: agentVolume
   activities(where: activityFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): activityPage
 }
 
@@ -151,6 +161,15 @@ type agentStats {
   averageScore: Float
   uniqueGivers: Int
   lastUpdated: BigInt
+}
+
+type agentVolume {
+  agentId: String!
+  totalVolume: BigInt
+  txCount: Int
+  uniquePayers: Int
+  lastPayment: BigInt
+  agent: agent
 }
 
 type activityPage {
@@ -347,6 +366,30 @@ input agentFilter {
   imageUri_ends_with: String
   imageUri_not_starts_with: String
   imageUri_not_ends_with: String
+  hasX402: Boolean
+  hasX402_not: Boolean
+  hasX402_in: [Boolean]
+  hasX402_not_in: [Boolean]
+  x402Payee: String
+  x402Payee_not: String
+  x402Payee_in: [String]
+  x402Payee_not_in: [String]
+  x402Payee_contains: String
+  x402Payee_not_contains: String
+  x402Payee_starts_with: String
+  x402Payee_ends_with: String
+  x402Payee_not_starts_with: String
+  x402Payee_not_ends_with: String
+  x402Network: String
+  x402Network_not: String
+  x402Network_in: [String]
+  x402Network_not_in: [String]
+  x402Network_contains: String
+  x402Network_not_contains: String
+  x402Network_starts_with: String
+  x402Network_ends_with: String
+  x402Network_not_starts_with: String
+  x402Network_not_ends_with: String
   isActive: Boolean
   isActive_not: Boolean
   isActive_in: [Boolean]
@@ -438,4 +481,220 @@ input agentStatsFilter {
   lastUpdated_lt: BigInt
   lastUpdated_gte: BigInt
   lastUpdated_lte: BigInt
+}
+
+type payment {
+  id: String!
+  agentId: String!
+  payee: String!
+  facilitator: String!
+  facilitatorId: String
+  amount: BigInt!
+  chainId: Int!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type paymentPage {
+  items: [payment!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input paymentFilter {
+  AND: [paymentFilter]
+  OR: [paymentFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  agentId: String
+  agentId_not: String
+  agentId_in: [String]
+  agentId_not_in: [String]
+  agentId_contains: String
+  agentId_not_contains: String
+  agentId_starts_with: String
+  agentId_ends_with: String
+  agentId_not_starts_with: String
+  agentId_not_ends_with: String
+  payee: String
+  payee_not: String
+  payee_in: [String]
+  payee_not_in: [String]
+  payee_contains: String
+  payee_not_contains: String
+  payee_starts_with: String
+  payee_ends_with: String
+  payee_not_starts_with: String
+  payee_not_ends_with: String
+  facilitator: String
+  facilitator_not: String
+  facilitator_in: [String]
+  facilitator_not_in: [String]
+  facilitator_contains: String
+  facilitator_not_contains: String
+  facilitator_starts_with: String
+  facilitator_ends_with: String
+  facilitator_not_starts_with: String
+  facilitator_not_ends_with: String
+  facilitatorId: String
+  facilitatorId_not: String
+  facilitatorId_in: [String]
+  facilitatorId_not_in: [String]
+  facilitatorId_contains: String
+  facilitatorId_not_contains: String
+  facilitatorId_starts_with: String
+  facilitatorId_ends_with: String
+  facilitatorId_not_starts_with: String
+  facilitatorId_not_ends_with: String
+  amount: BigInt
+  amount_not: BigInt
+  amount_in: [BigInt]
+  amount_not_in: [BigInt]
+  amount_gt: BigInt
+  amount_lt: BigInt
+  amount_gte: BigInt
+  amount_lte: BigInt
+  chainId: Int
+  chainId_not: Int
+  chainId_in: [Int]
+  chainId_not_in: [Int]
+  chainId_gt: Int
+  chainId_lt: Int
+  chainId_gte: Int
+  chainId_lte: Int
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+}
+
+type payeeLookup {
+  payee: String!
+  agentId: String!
+  agentName: String
+}
+
+type payeeLookupPage {
+  items: [payeeLookup!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input payeeLookupFilter {
+  AND: [payeeLookupFilter]
+  OR: [payeeLookupFilter]
+  payee: String
+  payee_not: String
+  payee_in: [String]
+  payee_not_in: [String]
+  payee_contains: String
+  payee_not_contains: String
+  payee_starts_with: String
+  payee_ends_with: String
+  payee_not_starts_with: String
+  payee_not_ends_with: String
+  agentId: String
+  agentId_not: String
+  agentId_in: [String]
+  agentId_not_in: [String]
+  agentId_contains: String
+  agentId_not_contains: String
+  agentId_starts_with: String
+  agentId_ends_with: String
+  agentId_not_starts_with: String
+  agentId_not_ends_with: String
+  agentName: String
+  agentName_not: String
+  agentName_in: [String]
+  agentName_not_in: [String]
+  agentName_contains: String
+  agentName_not_contains: String
+  agentName_starts_with: String
+  agentName_ends_with: String
+  agentName_not_starts_with: String
+  agentName_not_ends_with: String
+}
+
+type agentVolumePage {
+  items: [agentVolume!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input agentVolumeFilter {
+  AND: [agentVolumeFilter]
+  OR: [agentVolumeFilter]
+  agentId: String
+  agentId_not: String
+  agentId_in: [String]
+  agentId_not_in: [String]
+  agentId_contains: String
+  agentId_not_contains: String
+  agentId_starts_with: String
+  agentId_ends_with: String
+  agentId_not_starts_with: String
+  agentId_not_ends_with: String
+  totalVolume: BigInt
+  totalVolume_not: BigInt
+  totalVolume_in: [BigInt]
+  totalVolume_not_in: [BigInt]
+  totalVolume_gt: BigInt
+  totalVolume_lt: BigInt
+  totalVolume_gte: BigInt
+  totalVolume_lte: BigInt
+  txCount: Int
+  txCount_not: Int
+  txCount_in: [Int]
+  txCount_not_in: [Int]
+  txCount_gt: Int
+  txCount_lt: Int
+  txCount_gte: Int
+  txCount_lte: Int
+  uniquePayers: Int
+  uniquePayers_not: Int
+  uniquePayers_in: [Int]
+  uniquePayers_not_in: [Int]
+  uniquePayers_gt: Int
+  uniquePayers_lt: Int
+  uniquePayers_gte: Int
+  uniquePayers_lte: Int
+  lastPayment: BigInt
+  lastPayment_not: BigInt
+  lastPayment_in: [BigInt]
+  lastPayment_not_in: [BigInt]
+  lastPayment_gt: BigInt
+  lastPayment_lt: BigInt
+  lastPayment_gte: BigInt
+  lastPayment_lte: BigInt
 }
