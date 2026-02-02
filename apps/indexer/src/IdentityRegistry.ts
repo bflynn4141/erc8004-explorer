@@ -1,5 +1,12 @@
 import { ponder } from "@/generated";
-import { agent, activity, agentStats } from "../ponder.schema";
+import { agent, activity, agentStats, agentVolume } from "../ponder.schema";
+
+// Type for x402 payment info extracted from metadata
+interface X402Info {
+  hasX402: boolean;
+  payee?: string;
+  network?: string;
+}
 
 // Helper to fetch off-chain metadata from IPFS or HTTPS
 async function fetchMetadata(uri: string): Promise<{
@@ -7,6 +14,7 @@ async function fetchMetadata(uri: string): Promise<{
   description?: string;
   image?: string;
   services?: unknown;
+  x402?: X402Info;
 } | null> {
   try {
     let fetchUrl = uri;
@@ -34,11 +42,28 @@ async function fetchMetadata(uri: string): Promise<{
     }
 
     const data = await response.json();
+
+    // Extract x402 payment info if present
+    let x402Info: X402Info = { hasX402: false };
+    if (data.x402Support === true || data.payments) {
+      const x402Payment = data.payments?.find((p: { method?: string }) => p.method === "x402");
+      if (x402Payment) {
+        x402Info = {
+          hasX402: true,
+          payee: x402Payment.payee,
+          network: x402Payment.network,
+        };
+      } else if (data.x402Support) {
+        x402Info = { hasX402: true };
+      }
+    }
+
     return {
       name: data.name,
       description: data.description,
       image: data.image,
       services: data.services,
+      x402: x402Info,
     };
   } catch (error) {
     console.error(`Error fetching metadata from ${uri}:`, error);
@@ -68,6 +93,10 @@ ponder.on("IdentityRegistry:Registered", async ({ event, context }) => {
     description: metadata?.description ?? null,
     imageUri: metadata?.image ?? null,
     services: metadata?.services ?? null,
+    // x402 payment info
+    hasX402: metadata?.x402?.hasX402 ?? false,
+    x402Payee: metadata?.x402?.payee ?? null,
+    x402Network: metadata?.x402?.network ?? null,
     isActive: true,
     createdAt: event.block.timestamp,
     txHash: event.transaction.hash,
@@ -81,6 +110,15 @@ ponder.on("IdentityRegistry:Registered", async ({ event, context }) => {
     averageScore: 0,
     uniqueGivers: 0,
     lastUpdated: event.block.timestamp,
+  }).onConflictDoNothing();
+
+  // Initialize agent volume stats
+  await context.db.insert(agentVolume).values({
+    agentId: id,
+    totalVolume: 0n,
+    txCount: 0,
+    uniquePayers: 0,
+    lastPayment: null,
   }).onConflictDoNothing();
 
   // Record activity

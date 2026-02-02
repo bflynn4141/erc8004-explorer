@@ -8,6 +8,19 @@ interface AgentListProps {
   onAgentClick: (agent: Agent) => void
 }
 
+// Format USDC amount from 6 decimal places
+function formatUSDC(amount: string | undefined): string {
+  if (!amount || amount === '0') return '$0'
+  const value = parseFloat(amount) / 1e6
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(1)}k`
+  }
+  if (value >= 1) {
+    return `$${value.toFixed(0)}`
+  }
+  return `$${value.toFixed(2)}`
+}
+
 export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
   if (isLoading) {
     return (
@@ -40,15 +53,17 @@ export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden overflow-x-auto">
       {/* Header */}
-      <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-700/50 text-xs font-medium text-slate-400 uppercase tracking-wider">
-        <div className="col-span-4">Agent</div>
+      <div className="grid grid-cols-14 gap-2 px-4 py-3 bg-slate-700/50 text-xs font-medium text-slate-400 uppercase tracking-wider min-w-[900px]">
+        <div className="col-span-3">Agent</div>
         <div className="col-span-1 text-center">Chain</div>
         <div className="col-span-2 text-center">Status</div>
+        <div className="col-span-2 text-center">Volume</div>
+        <div className="col-span-1 text-center">Txs</div>
+        <div className="col-span-1 text-center">Payers</div>
         <div className="col-span-1 text-center">Reviews</div>
         <div className="col-span-1 text-center">Score</div>
-        <div className="col-span-1 text-center">Users</div>
         <div className="col-span-2 text-right">Created</div>
       </div>
 
@@ -56,16 +71,21 @@ export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
       <div className="divide-y divide-slate-700">
         {agents.map((agent) => {
           const hasMetadata = Boolean(agent.name || agent.description)
-          const isProduction = hasMetadata && (agent.stats?.feedbackCount ?? 0) > 0
+          const hasVolume = (agent.volume?.txCount ?? 0) > 0
+          const hasFeedback = (agent.stats?.feedbackCount ?? 0) > 0
+
+          // Status logic: Production = has volume OR has feedback with metadata
+          const isProduction = hasVolume || (hasMetadata && hasFeedback)
+          const isActive = hasMetadata && !isProduction
 
           return (
             <div
               key={agent.id}
               onClick={() => onAgentClick(agent)}
-              className="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-slate-700/30 cursor-pointer transition-colors items-center"
+              className="grid grid-cols-14 gap-2 px-4 py-3 hover:bg-slate-700/30 cursor-pointer transition-colors items-center min-w-[900px]"
             >
               {/* Agent Name/ID */}
-              <div className="col-span-4 flex items-center gap-3 min-w-0">
+              <div className="col-span-3 flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-400/20 to-primary-600/20 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {agent.imageUri?.startsWith('http') ? (
                     <img
@@ -81,9 +101,16 @@ export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white font-medium truncate">
-                    {agent.name || `Agent #${agent.agentId}`}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-white font-medium truncate">
+                      {agent.name || `Agent #${agent.agentId}`}
+                    </p>
+                    {agent.hasX402 && (
+                      <span className="text-xs px-1 py-0.5 bg-purple-500/20 text-purple-400 rounded" title="Accepts x402 payments">
+                        x402
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500 truncate">
                     {truncateAddress(agent.owner)}
                   </p>
@@ -108,7 +135,7 @@ export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
                     Production
                   </span>
-                ) : hasMetadata ? (
+                ) : isActive ? (
                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400">
                     <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
                     Active
@@ -121,11 +148,42 @@ export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
                 )}
               </div>
 
+              {/* Volume */}
+              <div className="col-span-2 text-center">
+                <span className={`text-sm font-medium ${
+                  hasVolume ? 'text-green-400' : 'text-slate-500'
+                }`}>
+                  {formatUSDC(agent.volume?.totalVolume)}
+                </span>
+              </div>
+
+              {/* Transactions */}
+              <div className="col-span-1 text-center">
+                <span className={`text-sm ${
+                  (agent.volume?.txCount ?? 0) > 0
+                    ? 'text-white'
+                    : 'text-slate-500'
+                }`}>
+                  {agent.volume?.txCount ?? 0}
+                </span>
+              </div>
+
+              {/* Unique Payers */}
+              <div className="col-span-1 text-center">
+                <span className={`text-sm ${
+                  (agent.volume?.uniquePayers ?? 0) > 0
+                    ? 'text-white'
+                    : 'text-slate-500'
+                }`}>
+                  {agent.volume?.uniquePayers ?? 0}
+                </span>
+              </div>
+
               {/* Reviews */}
               <div className="col-span-1 text-center">
                 <span className={`text-sm ${
                   (agent.stats?.feedbackCount ?? 0) > 0
-                    ? 'text-white font-medium'
+                    ? 'text-white'
                     : 'text-slate-500'
                 }`}>
                   {agent.stats?.feedbackCount ?? 0}
@@ -141,17 +199,6 @@ export function AgentList({ agents, isLoading, onAgentClick }: AgentListProps) {
                 ) : (
                   <span className="text-sm text-slate-500">—</span>
                 )}
-              </div>
-
-              {/* Users */}
-              <div className="col-span-1 text-center">
-                <span className={`text-sm ${
-                  (agent.stats?.uniqueGivers ?? 0) > 0
-                    ? 'text-white'
-                    : 'text-slate-500'
-                }`}>
-                  {agent.stats?.uniqueGivers ?? 0}
-                </span>
               </div>
 
               {/* Created */}

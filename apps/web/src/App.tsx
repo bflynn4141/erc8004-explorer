@@ -31,12 +31,16 @@ function App() {
 
       const hasMetadata = Boolean(agent.name || agent.description)
       const hasFeedback = (agent.stats?.feedbackCount ?? 0) > 0
+      const hasVolume = (agent.volume?.txCount ?? 0) > 0
+
+      // Production = has volume OR (has metadata + feedback)
+      const isProduction = hasVolume || (hasMetadata && hasFeedback)
 
       switch (statusFilter) {
         case 'production':
-          return hasMetadata && hasFeedback
+          return isProduction
         case 'active':
-          return hasMetadata && !hasFeedback
+          return hasMetadata && !isProduction
         case 'test':
           return !hasMetadata
         default:

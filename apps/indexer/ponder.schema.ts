@@ -13,6 +13,10 @@ export const agent = onchainTable("agent", (t) => ({
   description: t.text(),
   imageUri: t.text(),
   services: t.json(),
+  // x402 payment info (extracted from metadata)
+  hasX402: t.boolean().default(false),
+  x402Payee: t.text(), // Address that receives x402 payments
+  x402Network: t.text(), // Network for payments (e.g., "base", "ethereum")
   // Status
   isActive: t.boolean().default(true),
   // Timestamps
@@ -58,6 +62,27 @@ export const activity = onchainTable("activity", (t) => ({
   txHash: t.text().notNull(),
 }));
 
+// Payment table - x402 USDC payments (on Base)
+export const payment = onchainTable("payment", (t) => ({
+  id: t.text().primaryKey(), // txHash:logIndex
+  payee: t.text().notNull(), // Recipient address (agent's x402Payee)
+  payer: t.text().notNull(), // Sender address
+  amount: t.bigint().notNull(), // USDC amount (6 decimals)
+  chainId: t.integer().notNull(), // 8453 for Base
+  blockNumber: t.bigint().notNull(),
+  timestamp: t.bigint().notNull(),
+  txHash: t.text().notNull(),
+}));
+
+// AgentVolume table - aggregated payment stats per agent
+export const agentVolume = onchainTable("agent_volume", (t) => ({
+  agentId: t.text().primaryKey(), // FK to agent
+  totalVolume: t.bigint().default(0n), // Lifetime USDC volume (6 decimals)
+  txCount: t.integer().default(0), // Total payment transactions
+  uniquePayers: t.integer().default(0), // Unique payer addresses
+  lastPayment: t.bigint(), // Timestamp of last payment
+}));
+
 // Define relations
 export const agentRelations = relations(agent, ({ many, one }) => ({
   feedback: many(feedback),
@@ -65,7 +90,18 @@ export const agentRelations = relations(agent, ({ many, one }) => ({
     fields: [agent.id],
     references: [agentStats.agentId],
   }),
+  volume: one(agentVolume, {
+    fields: [agent.id],
+    references: [agentVolume.agentId],
+  }),
   activities: many(activity),
+}));
+
+export const agentVolumeRelations = relations(agentVolume, ({ one }) => ({
+  agent: one(agent, {
+    fields: [agentVolume.agentId],
+    references: [agent.id],
+  }),
 }));
 
 export const feedbackRelations = relations(feedback, ({ one }) => ({

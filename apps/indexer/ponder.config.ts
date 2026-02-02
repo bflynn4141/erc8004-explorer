@@ -3,6 +3,7 @@ import { http } from "viem";
 
 import IdentityRegistryAbi from "./abis/IdentityRegistry.json";
 import ReputationRegistryAbi from "./abis/ReputationRegistry.json";
+import ERC20Abi from "./abis/ERC20.json";
 
 // Mainnet contract addresses (0x8004 vanity addresses)
 const MAINNET_IDENTITY_REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
@@ -11,6 +12,9 @@ const MAINNET_REPUTATION_REGISTRY = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63"
 // Testnet contract addresses (legacy addresses)
 const TESTNET_IDENTITY_REGISTRY = "0x7177a6867296406881E20d6647232314736Dd09A" as const;
 const TESTNET_REPUTATION_REGISTRY = "0xB5048e3ef1DA4E04deB6f7d0423D06F63869e322" as const;
+
+// USDC contract addresses for x402 payment tracking
+const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 
 export default createConfig({
   networks: {
@@ -21,6 +25,10 @@ export default createConfig({
     sepolia: {
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
+    },
+    base: {
+      chainId: 8453,
+      transport: http(process.env.PONDER_RPC_URL_8453),
     },
   },
   contracts: {
@@ -49,6 +57,13 @@ export default createConfig({
           startBlock: 9376993,
         },
       },
+    },
+    // USDC on Base for x402 payment tracking
+    BaseUSDC: {
+      abi: ERC20Abi,
+      address: BASE_USDC,
+      network: "base",
+      startBlock: 24339871, // Same as ERC-8004 launch on mainnet
     },
   },
 });

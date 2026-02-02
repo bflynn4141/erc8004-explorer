@@ -8,15 +8,24 @@ export interface Agent {
   imageUri: string | null
   agentUri: string
   isActive: boolean
+  hasX402: boolean
   createdAt: string
   txHash: string
   stats: AgentStats | null
+  volume: AgentVolume | null
 }
 
 export interface AgentStats {
   feedbackCount: number
   averageScore: number
   uniqueGivers: number
+}
+
+export interface AgentVolume {
+  totalVolume: string // USDC in 6 decimals
+  txCount: number
+  uniquePayers: number
+  lastPayment: string | null
 }
 
 export interface AgentDetails extends Agent {
@@ -64,6 +73,9 @@ export interface ActivityEvent {
 export interface GlobalStats {
   totalAgents: number
   totalFeedback: number
+  totalVolume: string // USDC in 6 decimals
+  totalPayments: number
+  x402Agents: number
   agentsToday: number
   chains: ChainStats[]
 }

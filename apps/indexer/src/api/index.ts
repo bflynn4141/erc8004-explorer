@@ -1,5 +1,5 @@
 import { ponder } from "@/generated";
-import { agent, agentStats, feedback, activity } from "../../ponder.schema";
+import { agent, agentStats, agentVolume, feedback, activity, payment } from "../../ponder.schema";
 import { desc, eq, and, sql } from "@ponder/core";
 
 // GET /agents - List all agents with pagination
@@ -25,8 +25,16 @@ ponder.get("/agents", async (c) => {
       })
     : [];
 
-  // Create a map for quick lookup
+  // Get volume for all agents
+  const volumeResults = agentIds.length > 0
+    ? await c.db.query.agentVolume.findMany({
+        where: (vol, { inArray }) => inArray(vol.agentId, agentIds),
+      })
+    : [];
+
+  // Create maps for quick lookup
   const statsMap = new Map(statsResults.map((s) => [s.agentId, s]));
+  const volumeMap = new Map(volumeResults.map((v) => [v.agentId, v]));
 
   // Get total count
   const countResult = await c.db
@@ -37,6 +45,7 @@ ponder.get("/agents", async (c) => {
   // Format response
   const agents = agentResults.map((a) => {
     const stats = statsMap.get(a.id);
+    const volume = volumeMap.get(a.id);
     return {
       id: a.id,
       agentId: a.agentId.toString(),
@@ -47,6 +56,7 @@ ponder.get("/agents", async (c) => {
       imageUri: a.imageUri,
       agentUri: a.agentUri,
       isActive: a.isActive,
+      hasX402: a.hasX402,
       createdAt: a.createdAt.toString(),
       txHash: a.txHash,
       stats: stats
@@ -54,6 +64,14 @@ ponder.get("/agents", async (c) => {
             feedbackCount: stats.feedbackCount,
             averageScore: stats.averageScore,
             uniqueGivers: stats.uniqueGivers,
+          }
+        : null,
+      volume: volume
+        ? {
+            totalVolume: volume.totalVolume?.toString() ?? "0",
+            txCount: volume.txCount ?? 0,
+            uniquePayers: volume.uniquePayers ?? 0,
+            lastPayment: volume.lastPayment?.toString() ?? null,
           }
         : null,
     };
@@ -86,6 +104,11 @@ ponder.get("/agents/:chainId/:agentId", async (c) => {
     where: eq(agentStats.agentId, id),
   });
 
+  // Get volume
+  const volume = await c.db.query.agentVolume.findFirst({
+    where: eq(agentVolume.agentId, id),
+  });
+
   // Get recent feedback
   const recentFeedback = await c.db
     .select()
@@ -116,6 +139,9 @@ ponder.get("/agents/:chainId/:agentId", async (c) => {
     agentUri: agentRecord.agentUri,
     services: agentRecord.services,
     isActive: agentRecord.isActive,
+    hasX402: agentRecord.hasX402,
+    x402Payee: agentRecord.x402Payee,
+    x402Network: agentRecord.x402Network,
     createdAt: agentRecord.createdAt.toString(),
     updatedAt: agentRecord.updatedAt?.toString(),
     txHash: agentRecord.txHash,
@@ -126,6 +152,14 @@ ponder.get("/agents/:chainId/:agentId", async (c) => {
           averageScore: stats.averageScore,
           uniqueGivers: stats.uniqueGivers,
           lastUpdated: stats.lastUpdated?.toString(),
+        }
+      : null,
+    volume: volume
+      ? {
+          totalVolume: volume.totalVolume?.toString() ?? "0",
+          txCount: volume.txCount ?? 0,
+          uniquePayers: volume.uniquePayers ?? 0,
+          lastPayment: volume.lastPayment?.toString() ?? null,
         }
       : null,
     recentFeedback: recentFeedback.map((f) => ({
@@ -202,6 +236,25 @@ ponder.get("/stats", async (c) => {
     .from(feedback);
   const totalFeedback = totalFeedbackResult[0]?.count ?? 0;
 
+  // Total x402 volume (USDC with 6 decimals)
+  const totalVolumeResult = await c.db
+    .select({ total: sql<string>`coalesce(sum(${agentVolume.totalVolume}), 0)` })
+    .from(agentVolume);
+  const totalVolume = totalVolumeResult[0]?.total ?? "0";
+
+  // Total payment transactions
+  const totalPaymentsResult = await c.db
+    .select({ count: sql<number>`count(*)` })
+    .from(payment);
+  const totalPayments = totalPaymentsResult[0]?.count ?? 0;
+
+  // Agents with x402 support
+  const x402AgentsResult = await c.db
+    .select({ count: sql<number>`count(*)` })
+    .from(agent)
+    .where(eq(agent.hasX402, true));
+  const x402Agents = x402AgentsResult[0]?.count ?? 0;
+
   // Agents registered in last 24 hours
   const oneDayAgo = BigInt(Math.floor(Date.now() / 1000) - 86400);
   const agentsTodayResult = await c.db
@@ -229,6 +282,9 @@ ponder.get("/stats", async (c) => {
   return c.json({
     totalAgents,
     totalFeedback,
+    totalVolume, // USDC in 6 decimals (divide by 1e6 for USD)
+    totalPayments,
+    x402Agents,
     agentsToday,
     chains: agentsByChain.map((c) => ({
       chainId: c.chainId,
