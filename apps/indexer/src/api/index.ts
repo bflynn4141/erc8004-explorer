@@ -2,6 +2,69 @@ import { ponder } from "@/generated";
 import { agent, agentStats, agentVolume, feedback, activity, payment } from "../../ponder.schema";
 import { desc, eq, and, sql } from "@ponder/core";
 
+// Base USDC contract address
+const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+// Fetch x402 payment data from Alchemy API on-demand
+async function fetchPaymentData(payeeAddress: string): Promise<{
+  totalVolume: string;
+  txCount: number;
+  uniquePayers: number;
+  recentPayments: Array<{ from: string; amount: string; hash: string; timestamp: number }>;
+} | null> {
+  const alchemyUrl = process.env.PONDER_RPC_URL_8453;
+  if (!alchemyUrl) return null;
+
+  try {
+    const response = await fetch(alchemyUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "alchemy_getAssetTransfers",
+        params: [{
+          fromBlock: "0x0",
+          toBlock: "latest",
+          toAddress: payeeAddress,
+          contractAddresses: [BASE_USDC],
+          category: ["erc20"],
+          maxCount: "0x64", // 100 max
+        }],
+        id: 1,
+      }),
+    });
+
+    const data = await response.json();
+    const transfers = data.result?.transfers || [];
+
+    if (transfers.length === 0) {
+      return { totalVolume: "0", txCount: 0, uniquePayers: 0, recentPayments: [] };
+    }
+
+    // Calculate stats
+    const totalVolume = transfers.reduce((sum: number, t: { value: number }) => sum + (t.value || 0), 0);
+    const uniquePayers = new Set(transfers.map((t: { from: string }) => t.from.toLowerCase())).size;
+
+    // Format recent payments (USDC has 6 decimals, but Alchemy returns human-readable value)
+    const recentPayments = transfers.slice(0, 10).map((t: { from: string; value: number; hash: string; blockNum: string }) => ({
+      from: t.from,
+      amount: (t.value * 1e6).toString(), // Convert to 6 decimal format
+      hash: t.hash,
+      timestamp: parseInt(t.blockNum, 16), // Block number as proxy for timestamp
+    }));
+
+    return {
+      totalVolume: (totalVolume * 1e6).toString(), // Convert to 6 decimal format
+      txCount: transfers.length,
+      uniquePayers,
+      recentPayments,
+    };
+  } catch (error) {
+    console.error("Error fetching payment data from Alchemy:", error);
+    return null;
+  }
+}
+
 // GET /agents - List all agents with pagination
 ponder.get("/agents", async (c) => {
   const { limit = "50", offset = "0", chainId, sort = "newest" } = c.req.query();
@@ -106,10 +169,19 @@ ponder.get("/agents/:chainId/:agentId", async (c) => {
     where: eq(agentStats.agentId, id),
   });
 
-  // Get volume
-  const volume = await c.db.query.agentVolume.findFirst({
+  // Get volume from database (legacy)
+  const dbVolume = await c.db.query.agentVolume.findFirst({
     where: eq(agentVolume.agentId, id),
   });
+
+  // Fetch live payment data from Alchemy if agent has x402Payee
+  let livePaymentData = null;
+  if (agentRecord.x402Payee) {
+    livePaymentData = await fetchPaymentData(agentRecord.x402Payee);
+  }
+
+  // Use live data if available, otherwise fall back to database
+  const volume = livePaymentData || dbVolume;
 
   // Get recent feedback
   const recentFeedback = await c.db
@@ -162,6 +234,8 @@ ponder.get("/agents/:chainId/:agentId", async (c) => {
           txCount: volume.txCount ?? 0,
           uniquePayers: volume.uniquePayers ?? 0,
           lastPayment: volume.lastPayment?.toString() ?? null,
+          recentPayments: livePaymentData?.recentPayments ?? [],
+          isLive: !!livePaymentData, // Indicates data is from Alchemy API
         }
       : null,
     recentFeedback: recentFeedback.map((f) => ({

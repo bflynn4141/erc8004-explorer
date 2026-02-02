@@ -26,10 +26,11 @@ export default createConfig({
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
     },
-    base: {
-      chainId: 8453,
-      transport: http(process.env.PONDER_RPC_URL_8453),
-    },
+    // Base network - only used for on-demand API queries, not indexing
+    // base: {
+    //   chainId: 8453,
+    //   transport: http(process.env.PONDER_RPC_URL_8453),
+    // },
   },
   contracts: {
     IdentityRegistry: {
@@ -58,14 +59,12 @@ export default createConfig({
         },
       },
     },
-    // USDC on Base for x402 payment tracking
-    // Start from block 41417000 (just 441 blocks before first x402 payment at 41417441)
-    // Minimizes storage usage while still catching the known payment
-    BaseUSDC: {
-      abi: ERC20Abi,
-      address: BASE_USDC,
-      network: "base",
-      startBlock: 41417000,
-    },
+    // USDC on Base - disabled, using on-demand Alchemy API instead
+    // BaseUSDC: {
+    //   abi: ERC20Abi,
+    //   address: BASE_USDC,
+    //   network: "base",
+    //   startBlock: 41417000,
+    // },
   },
 });
