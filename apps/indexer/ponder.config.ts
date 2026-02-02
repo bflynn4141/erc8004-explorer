@@ -26,10 +26,11 @@ export default createConfig({
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
     },
-    base: {
-      chainId: 8453,
-      transport: http(process.env.PONDER_RPC_URL_8453),
-    },
+    // Base temporarily disabled - free Postgres tier storage limit
+    // base: {
+    //   chainId: 8453,
+    //   transport: http(process.env.PONDER_RPC_URL_8453),
+    // },
   },
   contracts: {
     IdentityRegistry: {
@@ -59,13 +60,13 @@ export default createConfig({
       },
     },
     // USDC on Base for x402 payment tracking
-    // Start from very recent block to minimize storage usage on free Postgres tier
-    // Can backfill later once database is upgraded
-    BaseUSDC: {
-      abi: ERC20Abi,
-      address: BASE_USDC,
-      network: "base",
-      startBlock: 41598000, // ~2 hours ago, minimizes DB storage while enabling x402 tracking
-    },
+    // TEMPORARILY DISABLED: Free Postgres tier doesn't have enough storage
+    // TODO: Re-enable once database is upgraded
+    // BaseUSDC: {
+    //   abi: ERC20Abi,
+    //   address: BASE_USDC,
+    //   network: "base",
+    //   startBlock: 41598000,
+    // },
   },
 });
