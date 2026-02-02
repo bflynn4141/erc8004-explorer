@@ -57,6 +57,8 @@ ponder.get("/agents", async (c) => {
       agentUri: a.agentUri,
       isActive: a.isActive,
       hasX402: a.hasX402,
+      x402Payee: a.x402Payee,
+      x402Network: a.x402Network,
       createdAt: a.createdAt.toString(),
       txHash: a.txHash,
       stats: stats
