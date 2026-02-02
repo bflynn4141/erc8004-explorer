@@ -59,12 +59,13 @@ export default createConfig({
       },
     },
     // USDC on Base for x402 payment tracking
-    // Start from block 41400000 (just before first known x402 payment)
+    // Start from block 41417000 (just 441 blocks before first x402 payment at 41417441)
+    // Minimizes storage usage while still catching the known payment
     BaseUSDC: {
       abi: ERC20Abi,
       address: BASE_USDC,
       network: "base",
-      startBlock: 41400000,
+      startBlock: 41417000,
     },
   },
 });
