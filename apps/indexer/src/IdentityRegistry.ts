@@ -8,7 +8,7 @@ interface X402Info {
   network?: string;
 }
 
-// Helper to fetch off-chain metadata from IPFS or HTTPS
+// Helper to fetch off-chain metadata from IPFS, HTTPS, or data URIs
 async function fetchMetadata(uri: string): Promise<{
   name?: string;
   description?: string;
@@ -17,31 +17,41 @@ async function fetchMetadata(uri: string): Promise<{
   x402?: X402Info;
 } | null> {
   try {
-    let fetchUrl = uri;
+    let data: Record<string, unknown>;
 
-    // Convert IPFS URI to HTTP gateway
-    if (uri.startsWith("ipfs://")) {
-      const cid = uri.replace("ipfs://", "");
-      fetchUrl = `https://ipfs.io/ipfs/${cid}`;
+    // Handle data URIs (base64 encoded JSON)
+    if (uri.startsWith("data:application/json;base64,")) {
+      const base64Data = uri.replace("data:application/json;base64,", "");
+      const jsonString = Buffer.from(base64Data, "base64").toString("utf-8");
+      data = JSON.parse(jsonString);
+    } else {
+      // Handle IPFS and HTTPS URIs
+      let fetchUrl = uri;
+
+      // Convert IPFS URI to HTTP gateway
+      if (uri.startsWith("ipfs://")) {
+        const cid = uri.replace("ipfs://", "");
+        fetchUrl = `https://ipfs.io/ipfs/${cid}`;
+      }
+
+      // Validate it's a valid URL
+      if (!fetchUrl.startsWith("http://") && !fetchUrl.startsWith("https://")) {
+        console.warn(`Invalid metadata URI: ${uri}`);
+        return null;
+      }
+
+      const response = await fetch(fetchUrl, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(10000), // 10s timeout
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch metadata: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      data = await response.json();
     }
-
-    // Validate it's a valid URL
-    if (!fetchUrl.startsWith("http://") && !fetchUrl.startsWith("https://")) {
-      console.warn(`Invalid metadata URI: ${uri}`);
-      return null;
-    }
-
-    const response = await fetch(fetchUrl, {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(10000), // 10s timeout
-    });
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch metadata: ${response.status} ${response.statusText}`);
-      return null;
-    }
-
-    const data = await response.json();
 
     // Extract x402 payment info if present
     let x402Info: X402Info = { hasX402: false };
