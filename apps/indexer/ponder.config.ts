@@ -59,12 +59,13 @@ export default createConfig({
       },
     },
     // USDC on Base for x402 payment tracking
-    // Start from recent block to speed up initial sync (can backfill later if needed)
+    // Start from very recent block to minimize storage usage on free Postgres tier
+    // Can backfill later once database is upgraded
     BaseUSDC: {
       abi: ERC20Abi,
       address: BASE_USDC,
       network: "base",
-      startBlock: 41558000, // ~24 hours ago, to catch recent x402 payments
+      startBlock: 41598000, // ~2 hours ago, minimizes DB storage while enabling x402 tracking
     },
   },
 });
