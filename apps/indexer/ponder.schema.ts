@@ -65,6 +65,7 @@ export const activity = onchainTable("activity", (t) => ({
 // Payment table - x402 USDC payments (on Base)
 export const payment = onchainTable("payment", (t) => ({
   id: t.text().primaryKey(), // txHash:logIndex
+  agentId: t.text().notNull(), // FK to agent (for aggregation queries)
   payee: t.text().notNull(), // Recipient address (agent's x402Payee)
   payer: t.text().notNull(), // Sender address
   amount: t.bigint().notNull(), // USDC amount (6 decimals)
@@ -72,6 +73,14 @@ export const payment = onchainTable("payment", (t) => ({
   blockNumber: t.bigint().notNull(),
   timestamp: t.bigint().notNull(),
   txHash: t.text().notNull(),
+}));
+
+// PayeeLookup table - maps x402 payee addresses to agent IDs
+// This enables O(1) lookup in event handlers (which can't use SQL WHERE)
+export const payeeLookup = onchainTable("payee_lookup", (t) => ({
+  payee: t.text().primaryKey(), // Lowercased payee address
+  agentId: t.text().notNull(), // FK to agent
+  agentName: t.text(), // Denormalized for logging
 }));
 
 // AgentVolume table - aggregated payment stats per agent

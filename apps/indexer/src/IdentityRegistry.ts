@@ -1,5 +1,5 @@
 import { ponder } from "@/generated";
-import { agent, activity, agentStats, agentVolume } from "../ponder.schema";
+import { agent, activity, agentStats, agentVolume, payeeLookup } from "../ponder.schema";
 
 // Type for x402 payment info extracted from metadata
 interface X402Info {
@@ -120,6 +120,15 @@ ponder.on("IdentityRegistry:Registered", async ({ event, context }) => {
     uniquePayers: 0,
     lastPayment: null,
   }).onConflictDoNothing();
+
+  // If agent has x402 payment info, add to payee lookup table
+  if (metadata?.x402?.hasX402 && metadata.x402.payee) {
+    await context.db.insert(payeeLookup).values({
+      payee: metadata.x402.payee.toLowerCase(),
+      agentId: id,
+      agentName: metadata.name ?? null,
+    }).onConflictDoNothing();
+  }
 
   // Record activity
   await context.db.insert(activity).values({
