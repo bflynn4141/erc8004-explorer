@@ -59,11 +59,12 @@ export default createConfig({
       },
     },
     // USDC on Base for x402 payment tracking
+    // Start from recent block to speed up initial sync (can backfill later if needed)
     BaseUSDC: {
       abi: ERC20Abi,
       address: BASE_USDC,
       network: "base",
-      startBlock: 24339871, // Same as ERC-8004 launch on mainnet
+      startBlock: 41558000, // ~24 hours ago, to catch recent x402 payments
     },
   },
 });
